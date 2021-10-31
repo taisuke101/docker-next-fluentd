@@ -1,0 +1,20 @@
+export default {
+	type: 'postgres',
+	host: 'localhost',
+	port: 5435,
+	username: 'taisuke',
+	password: 'taisuke',
+	database: 'taisuke',
+	url: 'postgres://taisuke:taisuke@postgres:5432/taisuke',
+	logging: false,
+	synchronize: true,
+	dropSchema: false,
+	entities: ['src/entities/**/*.ts'],
+	migrations: ['src/migration/**/*.ts'],
+	subscribers: ['src/subscriber/**/*.ts'],
+	cli: {
+		entitiesDir: 'src/entities',
+		migrationsDir: 'src/migration',
+		subscribersDir: 'src/subscriber',
+	},
+};

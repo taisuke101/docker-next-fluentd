@@ -1,0 +1,72 @@
+version: '3.7'
+services:
+  fluentd:
+    container_name: fluentd
+    image: fluent/fluentd:v1.3.2
+    restart: always
+    command: >
+      /usr/bin/fluentd -c /fluentd/etc/fluent.conf -v
+    ports:
+      - '127.0.0.1:24224:24224'
+      - '127.0.0.1:24224:24224/udp'
+    volumes:
+      - ${PWD}/fluentd/log:/fluentd/log
+      - ${PWD}/fluentd/fluent.conf:/fluentd/etc/fluent.conf:ro
+  client:
+    container_name: client
+    build:
+      context: ./client
+      dockerfile: Dockerfile.dev
+    volumes:
+      - ./client:/app
+    command: 'yarn dev'
+    ports:
+      - 3000:3000
+    logging:
+      driver: 'fluentd'
+      options:
+        fluentd-address: 'localhost:24224'
+        tag: 'docker.{{.Name}}'
+    extra_hosts:
+      - 'host.docker.internal:host-gateway'
+  server:
+    container_name: server
+    build:
+      context: ./server
+      dockerfile: Dockerfile.dev
+    volumes:
+      - ./server:/app
+    links:
+      - postgres
+    command: 'yarn dev-ts'
+    ports:
+      - 5000:5000
+    logging:
+      driver: 'fluentd'
+      options:
+        fluentd-address: 'localhost:24224'
+        tag: 'docker.{{.Name}}'
+    extra_hosts:
+      - 'host.docker.internal:host-gateway'
+  postgres:
+    container_name: postgres
+    image: 'postgres:latest'
+    restart: always
+    environment:
+      POSTGRES_PASSWORD: taisuke
+      POSTGRES_USER: taisuke
+      POSTGRES_DB: taisuke
+    ports:
+      - 5435:5432
+    extra_hosts:
+      - 'host.docker.internal:host-gateway'
+  # nginx:
+  #   depends_on:
+  #     - client
+  #     - server
+  #   restart: always
+  #   build:
+  #     context: ./nginx
+  #     dockerfile: Dockerfile.dev
+  #   ports:
+  #     - '3050:80'
